@@ -12,6 +12,7 @@ type client struct {
 	FirstName  string `json:"first_name"`
 	LastName   string `json:"last_name"`
 	Email      string `json:"email"`
+	password   string
 	MagicURL   string `json:"magic_login_url"`
 	AuthToken  string `json:"auth_token"`
 	httpClient *http.Client
@@ -36,8 +37,8 @@ type ticket struct {
 	Invalid    bool    `json:"not_yet_valid"`
 }
 
-func newClient(email string) *client {
-	return &client{Email: email, httpClient: new(http.Client)}
+func newClient(email, pass string) *client {
+	return &client{Email: email, password: pass, httpClient: new(http.Client)}
 }
 
 func (c client) req(method, addr string, val url.Values, obj interface{}) error {
@@ -56,13 +57,13 @@ func (c client) req(method, addr string, val url.Values, obj interface{}) error 
 	return json.NewDecoder(resp.Body).Decode(obj)
 }
 
-func (c *client) logon(pass string) error {
+func (c *client) logon() error {
 	pl := url.Values{}
 	pl.Set("email", c.Email)
-	pl.Set("password", pass)
+	pl.Set("password", c.password)
 	return c.req("POST", "https://api.fixr-app.com/api/v2/app/user/authenticate/with-email", pl, c)
 }
 
 func (c client) getEvent(n int, e *event) error {
-	return c.req("GET", fmt.Sprintf("https://api.fixr-app.com/api/v2/app/event/%d", n), url.Values{}, e)
+	return c.req("GET", fmt.Sprintf("https://api.fixr-app.com/api/v2/app/event/%d", n), nil, e)
 }
