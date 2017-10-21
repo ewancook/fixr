@@ -9,10 +9,10 @@ import (
 )
 
 type client struct {
+	email      string
+	password   string
 	FirstName  string `json:"first_name"`
 	LastName   string `json:"last_name"`
-	Email      string `json:"email"`
-	password   string
 	MagicURL   string `json:"magic_login_url"`
 	AuthToken  string `json:"auth_token"`
 	httpClient *http.Client
@@ -38,7 +38,7 @@ type ticket struct {
 }
 
 func newClient(email, pass string) *client {
-	return &client{Email: email, password: pass, httpClient: new(http.Client)}
+	return &client{email: email, password: pass, httpClient: new(http.Client)}
 }
 
 func (c client) req(method, addr string, val url.Values, obj interface{}) error {
@@ -59,7 +59,7 @@ func (c client) req(method, addr string, val url.Values, obj interface{}) error 
 
 func (c *client) logon() error {
 	pl := url.Values{}
-	pl.Set("email", c.Email)
+	pl.Set("email", c.email)
 	pl.Set("password", c.password)
 	return c.req("POST", "https://api.fixr-app.com/api/v2/app/user/authenticate/with-email", pl, c)
 }
