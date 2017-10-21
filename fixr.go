@@ -9,8 +9,8 @@ import (
 )
 
 type client struct {
-	email      string
-	password   string
+	Email      string
+	Password   string
 	FirstName  string `json:"first_name"`
 	LastName   string `json:"last_name"`
 	MagicURL   string `json:"magic_login_url"`
@@ -37,15 +37,18 @@ type ticket struct {
 	Invalid    bool    `json:"not_yet_valid"`
 }
 
-func newClient(email, pass string) *client {
-	return &client{email: email, password: pass, httpClient: new(http.Client)}
+func NewClient(email, pass string) *client {
+	return &client{Email: email, Password: pass, httpClient: new(http.Client)}
 }
 
-func (c client) req(method, addr string, val url.Values, obj interface{}) error {
+func (c *client) req(method, addr string, val url.Values, auth bool, obj interface{}) error {
 	data := bytes.NewBufferString(val.Encode())
 	r, err := http.NewRequest(method, addr, data)
 	if err != nil {
 		return err
+	}
+	if auth {
+		r.Header.Set("Authorization", fmt.Sprintf("Token %s", c.AuthToken))
 	}
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	r.ContentLength = int64(data.Len())
@@ -57,13 +60,15 @@ func (c client) req(method, addr string, val url.Values, obj interface{}) error 
 	return json.NewDecoder(resp.Body).Decode(obj)
 }
 
-func (c *client) logon() error {
+func (c *client) Logon() error {
 	pl := url.Values{}
-	pl.Set("email", c.email)
-	pl.Set("password", c.password)
-	return c.req("POST", "https://api.fixr-app.com/api/v2/app/user/authenticate/with-email", pl, c)
+	pl.Set("email", c.Email)
+	pl.Set("password", c.Password)
+	return c.req("POST", "https://api.fixr-app.com/api/v2/app/user/authenticate/with-email", pl, false, c)
 }
 
-func (c client) getEvent(n int, e *event) error {
-	return c.req("GET", fmt.Sprintf("https://api.fixr-app.com/api/v2/app/event/%d", n), nil, e)
+func (c *client) Event(n int) (*event, error) {
+	e := new(event)
+	addr := fmt.Sprintf("https://api.fixr-app.com/api/v2/app/event/%d", n)
+	return e, c.req("GET", addr, nil, false, e)
 }
