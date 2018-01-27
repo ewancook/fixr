@@ -54,6 +54,6 @@ func updateVersion() error {
 	return nil
 }
 
-func SetUserAgent(ua string) {
-	userAgent = ua
+func SetUserAgent(agent, platform string) {
+	userAgent, fixrPlatformVer = agent, platform
 }
