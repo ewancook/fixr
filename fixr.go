@@ -23,6 +23,7 @@ const (
 
 var (
 	fixrVersion string
+	userAgent   = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
 )
 
 type payload map[string]interface{}
@@ -123,7 +124,8 @@ func (c *client) post(addr string, val payload, auth bool, obj interface{}) erro
 }
 
 func (c *client) req(r *http.Request, auth bool, obj interface{}) error {
-	r.Header.Set("FIXR-Platform", "web")
+	r.Header.Set("User-Agent", userAgent)
+	r.Header["FIXR-Platform"] = []string{"web"} // Circumvents canonical formatting
 	if auth {
 		r.Header.Set("Authorization", fmt.Sprintf("Token %s", c.AuthToken))
 	}
@@ -133,7 +135,7 @@ func (c *client) req(r *http.Request, auth bool, obj interface{}) error {
 		r.Header.Set("Content-Type", "application/json")
 	}
 	if fixrVersion != "" {
-		r.Header.Set("FIXR-App-Version", fixrVersion)
+		r.Header["FIXR-App-Version"] = []string{fixrVersion}
 	}
 	resp, err := c.httpClient.Do(r)
 	if err != nil {

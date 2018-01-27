@@ -53,3 +53,7 @@ func updateVersion() error {
 	}
 	return nil
 }
+
+func SetUserAgent(ua string) {
+	userAgent = ua
+}
