@@ -58,7 +58,7 @@ func (c *client) NewCard(num, month, year, cvc, zip string) (*token, error) {
 		"card[cvc]":          cvc,
 		"card[address_zip]":  zip,
 	}
-	if err := c.req("POST", cardURL, pl, false, t); err != nil {
+	if err := c.post(cardURL, pl, false, t); err != nil {
 		return nil, errors.Wrap(err, "error retrieving tokens")
 	}
 	if t.Error != (stripeError{}) {
@@ -74,7 +74,7 @@ func (c *client) Tokens(t string) (*stripeUser, error) {
 		Error string     `json:"message,omitempty"`
 	}
 	pl := payload{"token": t}
-	if err := c.req("POST", tokenURL, pl, true, &s); err != nil {
+	if err := c.post(tokenURL, pl, true, &s); err != nil {
 		return nil, errors.Wrap(err, "error sending tokens")
 	}
 	if s.Error != "" {
@@ -90,7 +90,7 @@ func uuid() string {
 
 func genKey() string {
 	s := make([]interface{}, 8)
-	for x := 0; x < 8; x++ {
+	for x := range s {
 		s[x] = uuid()
 	}
 	return fmt.Sprintf("%s%s-%s-%s-%s-%s%s%s", s...)

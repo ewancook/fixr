@@ -80,9 +80,17 @@ func NewClient(email, pass string) *client {
 	return &client{Email: email, Password: pass, httpClient: new(http.Client)}
 }
 
-func (c *client) req(method, addr string, val payload, auth bool, obj interface{}) error {
+func (c *client) get(addr string, auth bool, obj interface{}) error {
+	r, err := http.NewRequest("GET", addr, nil)
+	if err != nil {
+		return errors.New("error creating GET request")
+	}
+	return c.req(r, auth, obj)
+}
+
+func (c *client) post(addr string, val payload, auth bool, obj interface{}) error {
 	data := new(bytes.Buffer)
-	if method == "GET" || addr == cardURL {
+	if addr == cardURL {
 		pl := url.Values{}
 		for x, y := range val {
 			str, ok := y.(string)
@@ -97,14 +105,18 @@ func (c *client) req(method, addr string, val payload, auth bool, obj interface{
 			return errors.Wrap(err, "error jsonifying payload")
 		}
 	}
-	r, err := http.NewRequest(method, addr, data)
+	r, err := http.NewRequest("POST", addr, data)
 	if err != nil {
-		return errors.Wrap(err, "error creating request")
+		return errors.New("error creating POST request")
 	}
+	return c.req(r, auth, obj)
+}
+
+func (c *client) req(r *http.Request, auth bool, obj interface{}) error {
 	if auth {
 		r.Header.Set("Authorization", fmt.Sprintf("Token %s", c.AuthToken))
 	}
-	if addr == cardURL {
+	if r.URL.String() == cardURL {
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	} else {
 		r.Header.Set("Content-Type", "application/json")
@@ -122,7 +134,7 @@ func (c *client) Logon() error {
 		"email":    c.Email,
 		"password": c.Password,
 	}
-	if err := c.req("POST", loginURL, pl, false, c); err != nil {
+	if err := c.post(loginURL, pl, false, c); err != nil {
 		return errors.Wrap(err, "error logging on")
 	}
 	if c.Error != "" {
@@ -133,7 +145,7 @@ func (c *client) Logon() error {
 
 func (c *client) Event(n int) (*event, error) {
 	e := new(event)
-	if err := c.req("GET", fmt.Sprintf(eventURL, n), nil, false, e); err != nil {
+	if err := c.get(fmt.Sprintf(eventURL, n), false, e); err != nil {
 		return nil, errors.Wrap(err, "error getting event")
 	}
 	if e.Error != "" {
@@ -144,7 +156,7 @@ func (c *client) Event(n int) (*event, error) {
 
 func (c *client) Promo(ticket_id int, s string) (*promoCode, error) {
 	p := new(promoCode)
-	if err := c.req("GET", fmt.Sprintf(promoURL, ticket_id, s), nil, true, p); err != nil {
+	if err := c.get(fmt.Sprintf(promoURL, ticket_id, s), true, p); err != nil {
 		return nil, errors.Wrap(err, "error getting promo code")
 	}
 	if p.Error != "" {
@@ -165,7 +177,7 @@ func (c *client) Book(ticket_id, amount int, promo *promoCode, gen bool) (*booki
 	if promo != nil {
 		pl["promo_code"] = promo.Code
 	}
-	if err := c.req("POST", bookingURL, pl, true, b); err != nil {
+	if err := c.post(bookingURL, pl, true, b); err != nil {
 		return nil, errors.Wrap(err, "error booking ticket")
 	}
 	if b.Error != "" {
