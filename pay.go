@@ -2,9 +2,6 @@ package fixr
 
 import (
 	"fmt"
-	"math"
-	"math/rand"
-	"strconv"
 
 	"github.com/pkg/errors"
 )
@@ -81,17 +78,4 @@ func (c *client) Tokens(t string) (*stripeUser, error) {
 		return nil, errors.New(fmt.Sprintf("error sending tokens: %s", s.Error))
 	}
 	return &s.User, nil
-}
-
-func uuid() string {
-	a := math.Floor(65536 * (1 + rand.Float64()))
-	return strconv.FormatInt(int64(a), 16)[1:]
-}
-
-func genKey() string {
-	s := make([]interface{}, 8)
-	for x := range s {
-		s[x] = uuid()
-	}
-	return fmt.Sprintf("%s%s-%s-%s-%s-%s%s%s", s...)
 }

@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -19,6 +21,10 @@ const (
 	tokenURL   = "https://api.fixr-app.com/api/v2/app/stripe"
 )
 
+var (
+	fixrVersion string
+)
+
 type payload map[string]interface{}
 
 type client struct {
@@ -28,8 +34,8 @@ type client struct {
 	LastName   string `json:"last_name"`
 	MagicURL   string `json:"magic_login_url"`
 	AuthToken  string `json:"auth_token"`
-	httpClient *http.Client
 	Error      string `json:"message,omitempty"`
+	httpClient *http.Client
 }
 
 type event struct {
@@ -74,6 +80,16 @@ func NewClient(email, pass string) *client {
 	return &client{Email: email, Password: pass, httpClient: new(http.Client)}
 }
 
+func Setup(seed bool) error {
+	if seed {
+		rand.Seed(time.Now().UnixNano())
+	}
+	if err := updateVersion(); err != nil {
+		return errors.Wrap(err, "setup failed to update version")
+	}
+	return nil
+}
+
 func (c *client) get(addr string, auth bool, obj interface{}) error {
 	r, err := http.NewRequest("GET", addr, nil)
 	if err != nil {
@@ -107,6 +123,7 @@ func (c *client) post(addr string, val payload, auth bool, obj interface{}) erro
 }
 
 func (c *client) req(r *http.Request, auth bool, obj interface{}) error {
+	r.Header.Set("FIXR-Platform", "web")
 	if auth {
 		r.Header.Set("Authorization", fmt.Sprintf("Token %s", c.AuthToken))
 	}
@@ -114,6 +131,9 @@ func (c *client) req(r *http.Request, auth bool, obj interface{}) error {
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	} else {
 		r.Header.Set("Content-Type", "application/json")
+	}
+	if fixrVersion != "" {
+		r.Header.Set("FIXR-App-Version", fixrVersion)
 	}
 	resp, err := c.httpClient.Do(r)
 	if err != nil {
