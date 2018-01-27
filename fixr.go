@@ -4,17 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/pkg/errors"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 const (
 	bookingURL = "https://api.fixr-app.com/api/v2/app/booking"
