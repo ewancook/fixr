@@ -1,4 +1,4 @@
-# FIXR
+﻿# FIXR
 A wrapper around FIXR's ticket API
 
 Installation: ``` go get github.com/Nefarious-/fixr ``` (requires github.com/pkg/errors)
@@ -28,7 +28,7 @@ func main() {
 	for _, t := range e.Tickets {
 		fmt.Printf("[%d] %s (£%.2f; Max: %d)\n", t.ID, t.Name, t.Price + t.BookingFee, t.Max)
 	}
-	b, err := c.Book(e.Tickets[0].ID, 1, nil, true)
+	b, err := c.Book(&e.Tickets[0], 1, nil)
 	if err != nil {
 		fmt.Printf("purchase failed (%v)", err)
 		return
