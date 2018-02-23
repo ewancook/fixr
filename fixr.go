@@ -181,13 +181,13 @@ func (c *client) Promo(ticket_id int, s string) (*promoCode, error) {
 	return p, nil
 }
 
-func (c *client) Book(ticket_id, amount int, promo *promoCode, gen bool) (*booking, error) {
+func (c *client) Book(ticket *ticket, amount int, promo *promoCode) (*booking, error) {
 	b := new(booking)
 	pl := payload{
-		"ticket_id": ticket_id,
+		"ticket_id": ticket.ID,
 		"amount":    amount,
 	}
-	if gen {
+	if ticket.BookingFee + ticket.Price > 0 {
 		pl["purchase_key"] = genKey()
 	}
 	if promo != nil {
