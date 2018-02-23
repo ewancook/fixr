@@ -187,7 +187,19 @@ func (c *client) Book(ticket *ticket, amount int, promo *promoCode) (*booking, e
 		"ticket_id": ticket.ID,
 		"amount":    amount,
 	}
-	if ticket.BookingFee + ticket.Price > 0 {
+	for t, msg := range map[bool]string{
+		ticket.SoldOut: "ticket selection has sold out",
+		ticket.Expired: "ticket selection has expired",
+		ticket.Invalid: "ticket selection is invalid",
+	} {
+		if t {
+			return nil, errors.New(msg)
+		}
+	}
+	if amount > ticket.Max {
+		return nil, errors.New(fmt.Sprintf("cannot purchase more than the maximum (%d)", ticket.Max))
+	}
+	if ticket.BookingFee+ticket.Price > 0 {
 		pl["purchase_key"] = genKey()
 	}
 	if promo != nil {
