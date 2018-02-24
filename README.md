@@ -1,9 +1,12 @@
 ﻿# FIXR
 A wrapper around FIXR's ticket API
 
-Installation: ``` go get github.com/Nefarious-/fixr ``` (requires github.com/pkg/errors)
+## Installation
+1. `go get github.com/pkg/errors`
+2. `go get github.com/Nefarious-/fixr`
+3. Done!
 
-Example Code:
+## Example Code:
 
 ```go
 package main
