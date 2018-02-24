@@ -44,7 +44,12 @@ type stripeCard struct {
 	Country     string `json:"country"`
 }
 
-func (c *client) NewCard(num, month, year, cvc, zip string) (*token, error) {
+type tokenRequest struct {
+	User  stripeUser `json:"stripe_user"`
+	Error string     `json:"message,omitempty"`
+}
+
+func (c *client) AddCard(num, month, year, cvc, zip string) (*stripeUser, error) {
 	t := new(token)
 	pl := payload{
 		"payment_user_agent": ua,
@@ -62,16 +67,8 @@ func (c *client) NewCard(num, month, year, cvc, zip string) (*token, error) {
 		m := fmt.Sprintf("error retrieving tokens: %s", t.Error.Message)
 		return nil, errors.New(m)
 	}
-	return t, nil
-}
-
-func (c *client) Tokens(t string) (*stripeUser, error) {
-	var s struct {
-		User  stripeUser `json:"stripe_user"`
-		Error string     `json:"message,omitempty"`
-	}
-	pl := payload{"token": t}
-	if err := c.post(tokenURL, pl, true, &s); err != nil {
+	s := new(tokenRequest)
+	if err := c.post(tokenURL, payload{"token": t.Token}, true, s); err != nil {
 		return nil, errors.Wrap(err, "error sending tokens")
 	}
 	if s.Error != "" {
