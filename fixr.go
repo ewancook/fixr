@@ -154,7 +154,7 @@ func (c *client) Logon() error {
 		return errors.Wrap(err, "error logging on")
 	}
 	if c.Error != "" {
-		return errors.New(fmt.Sprintf("error logging on: %s", c.Error))
+		return fmt.Errorf("error logging on: %s", c.Error)
 	}
 	return nil
 }
@@ -165,18 +165,18 @@ func (c *client) Event(n int) (*event, error) {
 		return nil, errors.Wrap(err, "error getting event")
 	}
 	if e.Error != "" {
-		return nil, errors.New(fmt.Sprintf("error getting event: %s", e.Error))
+		return nil, fmt.Errorf("error getting event: %s", e.Error)
 	}
 	return e, nil
 }
 
-func (c *client) Promo(ticket_id int, s string) (*promoCode, error) {
+func (c *client) Promo(ticketID int, s string) (*promoCode, error) {
 	p := new(promoCode)
-	if err := c.get(fmt.Sprintf(promoURL, ticket_id, s), true, p); err != nil {
+	if err := c.get(fmt.Sprintf(promoURL, ticketID, s), true, p); err != nil {
 		return nil, errors.Wrap(err, "error getting promo code")
 	}
 	if p.Error != "" {
-		return nil, errors.New(fmt.Sprintf("error getting promo code: %s", p.Error))
+		return nil, fmt.Errorf("error getting promo code: %s", p.Error)
 	}
 	return p, nil
 }
@@ -197,7 +197,7 @@ func (c *client) Book(ticket *ticket, amount int, promo *promoCode) (*booking, e
 		}
 	}
 	if amount > ticket.Max {
-		return nil, errors.New(fmt.Sprintf("cannot purchase more than the maximum (%d)", ticket.Max))
+		return nil, fmt.Errorf("cannot purchase more than the maximum (%d)", ticket.Max)
 	}
 	if ticket.BookingFee+ticket.Price > 0 {
 		pl["purchase_key"] = genKey()
@@ -209,7 +209,7 @@ func (c *client) Book(ticket *ticket, amount int, promo *promoCode) (*booking, e
 		return nil, errors.Wrap(err, "error booking ticket")
 	}
 	if b.Error != "" {
-		return nil, errors.New(fmt.Sprintf("error booking ticket: %s", b.Error))
+		return nil, fmt.Errorf("error booking ticket: %s", b.Error)
 	}
 	return b, nil
 }

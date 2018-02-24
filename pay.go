@@ -60,15 +60,15 @@ func (c *client) AddCard(num, month, year, cvc, zip string) (*stripeUser, error)
 		return nil, errors.Wrap(err, "error retrieving tokens")
 	}
 	if t.Error != (stripeError{}) {
-		m := fmt.Sprintf("error retrieving tokens: %s", t.Error.Message)
-		return nil, errors.New(m)
+		m := fmt.Errorf("error retrieving tokens: %s", t.Error.Message)
+		return nil, m
 	}
 	s := new(tokenRequest)
 	if err := c.post(tokenURL, payload{"token": t.Token}, true, s); err != nil {
 		return nil, errors.Wrap(err, "error sending tokens")
 	}
 	if s.Error != "" {
-		return nil, errors.New(fmt.Sprintf("error sending tokens: %s", s.Error))
+		return nil, fmt.Errorf("error sending tokens: %s", s.Error)
 	}
 	return &s.User, nil
 }
