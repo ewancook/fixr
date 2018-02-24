@@ -11,10 +11,6 @@ const (
 	ua  string = "stripe.js/604c5e8"
 )
 
-type card struct {
-	number, month, year, cvc, zip string
-}
-
 type stripeError struct {
 	Type    string `json:"type"`
 	Message string `json:"message"`
