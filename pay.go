@@ -46,6 +46,9 @@ type tokenRequest struct {
 }
 
 func (c *client) HasCard() (bool, error) {
+	if c.StripeUser == nil {
+		return false, nil
+	}
 	existing := len(c.StripeUser.Cards) != 0
 	if err := c.get(meURL, true, &c); err != nil {
 		return existing, errors.Wrap(err, "error updating stripe details")
