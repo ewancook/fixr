@@ -19,10 +19,11 @@ const (
 	eventURL   = "https://api.fixr-app.com/api/v2/app/event/%d"
 	cardURL    = "https://api.stripe.com/v1/tokens"
 	tokenURL   = "https://api.fixr-app.com/api/v2/app/stripe"
+	meURL      = "https://api.fixr-app.com/api/v2/app/user/me"
 )
 
 var (
-	fixrVersion     = "1.16.4"
+	fixrVersion     = "1.18.4"
 	fixrPlatformVer = "Chrome/51.0.2704.103"
 	userAgent       = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
 )
@@ -32,11 +33,12 @@ type payload map[string]interface{}
 type client struct {
 	Email      string
 	Password   string
-	FirstName  string `json:"first_name"`
-	LastName   string `json:"last_name"`
-	MagicURL   string `json:"magic_login_url"`
-	AuthToken  string `json:"auth_token"`
-	Error      string `json:"message,omitempty"`
+	FirstName  string      `json:"first_name"`
+	LastName   string      `json:"last_name"`
+	MagicURL   string      `json:"magic_login_url"`
+	AuthToken  string      `json:"auth_token"`
+	Error      string      `json:"message,omitempty"`
+	StripeUser *stripeUser `json:"stripe_user"`
 	httpClient *http.Client
 }
 
@@ -150,7 +152,7 @@ func (c *client) Logon() error {
 		"email":    c.Email,
 		"password": c.Password,
 	}
-	if err := c.post(loginURL, pl, false, c); err != nil {
+	if err := c.post(loginURL, pl, false, &c); err != nil {
 		return errors.Wrap(err, "error logging on")
 	}
 	if c.Error != "" {

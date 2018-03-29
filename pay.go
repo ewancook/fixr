@@ -45,6 +45,17 @@ type tokenRequest struct {
 	Error string     `json:"message,omitempty"`
 }
 
+func (c *client) HasCard() (bool, error) {
+	existing := len(c.StripeUser.Cards) != 0
+	if err := c.get(meURL, true, &c); err != nil {
+		return existing, errors.Wrap(err, "error updating stripe details")
+	}
+	if c.Error != "" {
+		return existing, fmt.Errorf("error updating stripe details: %s", c.Error)
+	}
+	return len(c.StripeUser.Cards) != 0, nil
+}
+
 func (c *client) AddCard(num, month, year, cvc, zip string) (*stripeUser, error) {
 	t := new(token)
 	pl := payload{
