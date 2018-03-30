@@ -152,7 +152,7 @@ func (c *client) Logon() error {
 		"email":    c.Email,
 		"password": c.Password,
 	}
-	if err := c.post(loginURL, pl, false, &c); err != nil {
+	if err := c.post(loginURL, pl, false, c); err != nil {
 		return errors.Wrap(err, "error logging on")
 	}
 	if c.Error != "" {

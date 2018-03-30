@@ -50,7 +50,7 @@ func (c *client) HasCard() (bool, error) {
 		return false, nil
 	}
 	existing := len(c.StripeUser.Cards) != 0
-	if err := c.get(meURL, true, &c); err != nil {
+	if err := c.get(meURL, true, c); err != nil {
 		return existing, errors.Wrap(err, "error updating stripe details")
 	}
 	if c.Error != "" {
