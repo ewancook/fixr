@@ -192,7 +192,9 @@ func (c *client) Book(ticket *ticket, amount int, promo *promoCode) (*booking, e
 	for t, msg := range map[bool]string{
 		ticket.SoldOut: "ticket selection has sold out",
 		ticket.Expired: "ticket selection has expired",
-		ticket.Invalid: "ticket selection is invalid",
+		/* ticket.Invalid: "ticket selection is invalid",
+		Invalid can change upon ticket release (i.e. is time dependent),
+		it should therefore be checked with an API call. */
 	} {
 		if t {
 			return nil, errors.New(msg)
