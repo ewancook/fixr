@@ -86,7 +86,7 @@ func NewClient(email, pass string) *client {
 }
 
 // Setup updates the FIXR API version for use in the HTTP requests.
-// the random number generator can be seeded by calling Setup(true).
+// The random number generator can be seeded by calling Setup(true).
 // An error will be returned if one is encountered.
 func Setup(seed bool) error {
 	if seed {
