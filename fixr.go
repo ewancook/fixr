@@ -30,7 +30,8 @@ var (
 
 type payload map[string]interface{}
 
-type client struct {
+// Client provides access to the FIXR API methods.
+type Client struct {
 	Email      string
 	Password   string
 	FirstName  string      `json:"first_name"`
@@ -42,14 +43,16 @@ type client struct {
 	httpClient *http.Client
 }
 
-type event struct {
+// Event contains the event details for given event ID.
+type Event struct {
 	ID      int      `json:"id"`
 	Name    string   `json:"name"`
-	Tickets []ticket `json:"tickets"`
+	Tickets []Ticket `json:"tickets"`
 	Error   string   `json:"detail,omitempty"`
 }
 
-type ticket struct {
+// Ticket contains all the information pertaining to a specific ticket for an event.
+type Ticket struct {
 	ID         int     `json:"id"`
 	Name       string  `json:"name"`
 	Type       int     `json:"type"`
@@ -62,7 +65,8 @@ type ticket struct {
 	Invalid    bool    `json:"not_yet_valid"`
 }
 
-type promoCode struct {
+// PromoCode contains the details of a specific promotional code.
+type PromoCode struct {
 	Code       string  `json:"code"`
 	Price      float64 `json:"price"`
 	BookingFee float64 `json:"booking_fee"`
@@ -72,8 +76,9 @@ type promoCode struct {
 	Error      string  `json:"message,omitempty"`
 }
 
-type booking struct {
-	Event event  `json:"event"`
+// Booking contains the resultant booking information.
+type Booking struct {
+	Event Event  `json:"event"`
 	Name  string `json:"user_full_name"`
 	PDF   string `json:"pdf"`
 	State int    `json:"state"`
@@ -81,8 +86,8 @@ type booking struct {
 }
 
 // NewClient returns a FIXR client with the given email and password.
-func NewClient(email, pass string) *client {
-	return &client{Email: email, Password: pass, httpClient: new(http.Client)}
+func NewClient(email, pass string) *Client {
+	return &Client{Email: email, Password: pass, httpClient: new(http.Client)}
 }
 
 // Setup updates the FIXR API version for use in the HTTP requests.
@@ -98,7 +103,7 @@ func Setup(seed bool) error {
 	return nil
 }
 
-func (c *client) get(addr string, auth bool, obj interface{}) error {
+func (c *Client) get(addr string, auth bool, obj interface{}) error {
 	r, err := http.NewRequest("GET", addr, nil)
 	if err != nil {
 		return errors.New("error creating GET request")
@@ -106,7 +111,7 @@ func (c *client) get(addr string, auth bool, obj interface{}) error {
 	return c.req(r, auth, obj)
 }
 
-func (c *client) post(addr string, val payload, auth bool, obj interface{}) error {
+func (c *Client) post(addr string, val payload, auth bool, obj interface{}) error {
 	data := new(bytes.Buffer)
 	if addr == cardURL {
 		pl := url.Values{}
@@ -130,7 +135,7 @@ func (c *client) post(addr string, val payload, auth bool, obj interface{}) erro
 	return c.req(r, auth, obj)
 }
 
-func (c *client) req(r *http.Request, auth bool, obj interface{}) error {
+func (c *Client) req(r *http.Request, auth bool, obj interface{}) error {
 	r.Header.Set("User-Agent", userAgent)
 	if auth {
 		r.Header.Set("Authorization", fmt.Sprintf("Token %s", c.AuthToken))
@@ -153,7 +158,7 @@ func (c *client) req(r *http.Request, auth bool, obj interface{}) error {
 }
 
 // Logon authenticates the client with FIXR and returns an error if encountered.
-func (c *client) Logon() error {
+func (c *Client) Logon() error {
 	pl := payload{
 		"email":    c.Email,
 		"password": c.Password,
@@ -169,8 +174,8 @@ func (c *client) Logon() error {
 
 // Event returns the event information for a given event ID (integer).
 // An error will be returned if one is encountered.
-func (c *client) Event(n int) (*event, error) {
-	e := new(event)
+func (c *Client) Event(n int) (*Event, error) {
+	e := new(Event)
 	if err := c.get(fmt.Sprintf(eventURL, n), false, e); err != nil {
 		return nil, errors.Wrap(err, "error getting event")
 	}
@@ -181,10 +186,10 @@ func (c *client) Event(n int) (*event, error) {
 }
 
 // Promo checks for the existence of a promotion code for a given ticket ID.
-// The returned *promoCode can subsequently be passed to Book().
+// The returned *PromoCode can subsequently be passed to Book().
 // An error will be returned if one is encountered.
-func (c *client) Promo(ticketID int, s string) (*promoCode, error) {
-	p := new(promoCode)
+func (c *Client) Promo(ticketID int, s string) (*PromoCode, error) {
+	p := new(PromoCode)
 	if err := c.get(fmt.Sprintf(promoURL, ticketID, s), true, p); err != nil {
 		return nil, errors.Wrap(err, "error getting promo code")
 	}
@@ -194,10 +199,10 @@ func (c *client) Promo(ticketID int, s string) (*promoCode, error) {
 	return p, nil
 }
 
-// Book books a ticket, given a *ticket and an amout (with the option of a promo code).
+// Book books a ticket, given a *Ticket and an amout (with the option of a promo code).
 // The booking details and an error, if encountered, will be returned.
-func (c *client) Book(ticket *ticket, amount int, promo *promoCode) (*booking, error) {
-	b := new(booking)
+func (c *Client) Book(ticket *Ticket, amount int, promo *PromoCode) (*Booking, error) {
+	b := new(Booking)
 	pl := payload{
 		"ticket_id": ticket.ID,
 		"amount":    amount,

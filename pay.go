@@ -47,7 +47,7 @@ type tokenRequest struct {
 
 // HasCard checks for the existence of a saved card in the user's FIXR account.
 // The result and an error, if encountered, will be returned.
-func (c *client) HasCard() (bool, error) {
+func (c *Client) HasCard() (bool, error) {
 	if c.StripeUser == nil {
 		return false, nil
 	}
@@ -63,7 +63,7 @@ func (c *client) HasCard() (bool, error) {
 
 // AddCard saves a card to the user's FIXR account, given the card details.
 // An error will be returned if encountered
-func (c *client) AddCard(num, month, year, cvc, zip string) error {
+func (c *Client) AddCard(num, month, year, cvc, zip string) error {
 	t := new(token)
 	pl := payload{
 		"payment_user_agent": ua,
