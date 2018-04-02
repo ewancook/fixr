@@ -45,6 +45,8 @@ type tokenRequest struct {
 	Error string     `json:"message,omitempty"`
 }
 
+// HasCard checks for the existence of a saved card in the user's FIXR account.
+// The result and an error, if encountered, will be returned.
 func (c *client) HasCard() (bool, error) {
 	if c.StripeUser == nil {
 		return false, nil
@@ -59,7 +61,9 @@ func (c *client) HasCard() (bool, error) {
 	return len(c.StripeUser.Cards) != 0, nil
 }
 
-func (c *client) AddCard(num, month, year, cvc, zip string) (*stripeUser, error) {
+// AddCard saves a card to the user's FIXR account, given the card details.
+// An error will be returned if encountered
+func (c *client) AddCard(num, month, year, cvc, zip string) error {
 	t := new(token)
 	pl := payload{
 		"payment_user_agent": ua,
@@ -71,18 +75,19 @@ func (c *client) AddCard(num, month, year, cvc, zip string) (*stripeUser, error)
 		"card[address_zip]":  zip,
 	}
 	if err := c.post(cardURL, pl, false, t); err != nil {
-		return nil, errors.Wrap(err, "error retrieving tokens")
+		return errors.Wrap(err, "error retrieving tokens")
 	}
 	if t.Error != (stripeError{}) {
 		m := fmt.Errorf("error retrieving tokens: %s", t.Error.Message)
-		return nil, m
+		return m
 	}
 	s := new(tokenRequest)
 	if err := c.post(tokenURL, payload{"token": t.Token}, true, s); err != nil {
-		return nil, errors.Wrap(err, "error sending tokens")
+		return errors.Wrap(err, "error sending tokens")
 	}
 	if s.Error != "" {
-		return nil, fmt.Errorf("error sending tokens: %s", s.Error)
+		return fmt.Errorf("error sending tokens: %s", s.Error)
 	}
-	return &s.User, nil
+	c.StripeUser = &s.User
+	return nil
 }

@@ -54,6 +54,7 @@ func updateVersion() error {
 	return nil
 }
 
+// SetUserAgent sets the platform and user agent for HTTP requests.
 func SetUserAgent(agent, platform string) {
 	userAgent, fixrPlatformVer = agent, platform
 }
