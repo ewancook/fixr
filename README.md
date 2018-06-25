@@ -3,7 +3,7 @@ A wrapper around FIXR's ticket API
 
 ## Installation
 1. `go get github.com/pkg/errors`
-2. `go get github.com/Nefarious-/fixr`
+2. `go get github.com/ewancook/fixr`
 3. Done!
 
 ## Example Code:
@@ -14,7 +14,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/Nefarious-/fixr"
+	"github.com/ewancook/fixr"
 )
 
 func main() {
