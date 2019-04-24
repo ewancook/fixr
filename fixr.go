@@ -22,9 +22,14 @@ const (
 )
 
 var (
-	FixrVersion     = "1.34.0"
+	// FixrVersion represents FIXR's web API version.
+	FixrVersion = "1.34.0"
+
+	// FixrPlatformVer represents the "platform" used to "browse" the site.
 	FixrPlatformVer = "Chrome/51.0.2704.103"
-	UserAgent       = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
+
+	// UserAgent is the user agent passed to every API call.
+	UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
 )
 
 type payload map[string]interface{}
