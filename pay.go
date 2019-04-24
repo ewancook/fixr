@@ -64,7 +64,7 @@ func (c *Client) HasCard() (bool, error) {
 // AddCard saves a card to the user's FIXR account, given the card details.
 // An error will be returned if encountered
 func (c *Client) AddCard(num, month, year, cvc, zip string) error {
-	t := new(token)
+	token := new(token)
 	pl := payload{
 		"payment_user_agent": ua,
 		"key":                key,
@@ -74,20 +74,19 @@ func (c *Client) AddCard(num, month, year, cvc, zip string) error {
 		"card[cvc]":          cvc,
 		"card[address_zip]":  zip,
 	}
-	if err := c.post(cardURL, pl, false, t); err != nil {
+	if err := c.post(cardURL, pl, false, token); err != nil {
 		return errors.Wrap(err, "error retrieving tokens")
 	}
-	if t.Error != (stripeError{}) {
-		m := fmt.Errorf("error retrieving tokens: %s", t.Error.Message)
-		return m
+	if token.Error != (stripeError{}) {
+		return fmt.Errorf("error retrieving tokens: %s", token.Error.Message)
 	}
-	s := new(tokenRequest)
-	if err := c.post(tokenURL, payload{"token": t.Token}, true, s); err != nil {
+	tokenReq := new(tokenRequest)
+	if err := c.post(tokenURL, payload{"token": token.Token}, true, tokenReq); err != nil {
 		return errors.Wrap(err, "error sending tokens")
 	}
-	if s.Error != "" {
-		return fmt.Errorf("error sending tokens: %s", s.Error)
+	if tokenReq.Error != "" {
+		return fmt.Errorf("error sending tokens: %s", tokenReq.Error)
 	}
-	c.StripeUser = &s.User
+	c.StripeUser = &tokenReq.User
 	return nil
 }

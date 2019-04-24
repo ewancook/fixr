@@ -4,15 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/pkg/errors"
 )
 
 const (
+	homeURL    = "https://fixr.co"
 	bookingURL = "https://api.fixr-app.com/api/v2/app/booking"
 	promoURL   = "https://api.fixr-app.com/api/v2/app/promo_code/%d/%s"
 	loginURL   = "https://api.fixr-app.com/api/v2/app/user/authenticate/with-email"
@@ -23,9 +22,9 @@ const (
 )
 
 var (
-	fixrVersion     = "1.18.4"
-	fixrPlatformVer = "Chrome/51.0.2704.103"
-	userAgent       = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
+	FixrVersion     = "1.34.0"
+	FixrPlatformVer = "Chrome/51.0.2704.103"
+	UserAgent       = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
 )
 
 type payload map[string]interface{}
@@ -90,37 +89,24 @@ func NewClient(email, pass string) *Client {
 	return &Client{Email: email, Password: pass, httpClient: new(http.Client)}
 }
 
-// Setup updates the FIXR API version for use in the HTTP requests.
-// The random number generator can be seeded by calling Setup(true).
-// An error will be returned if one is encountered.
-func Setup(seed bool) error {
-	if seed {
-		rand.Seed(time.Now().UnixNano())
-	}
-	if err := updateVersion(); err != nil {
-		return errors.Wrap(err, "setup failed to update version")
-	}
-	return nil
-}
-
 func (c *Client) get(addr string, auth bool, obj interface{}) error {
-	r, err := http.NewRequest("GET", addr, nil)
+	req, err := http.NewRequest("GET", addr, nil)
 	if err != nil {
 		return errors.New("error creating GET request")
 	}
-	return c.req(r, auth, obj)
+	return c.req(req, auth, obj)
 }
 
 func (c *Client) post(addr string, val payload, auth bool, obj interface{}) error {
 	data := new(bytes.Buffer)
 	if addr == cardURL {
 		pl := url.Values{}
-		for x, y := range val {
-			str, ok := y.(string)
+		for key, value := range val {
+			valueStr, ok := value.(string)
 			if !ok {
 				return errors.New("failed to build payload")
 			}
-			pl.Set(x, str)
+			pl.Set(key, valueStr)
 		}
 		data.WriteString(pl.Encode())
 	} else {
@@ -128,28 +114,28 @@ func (c *Client) post(addr string, val payload, auth bool, obj interface{}) erro
 			return errors.Wrap(err, "error jsonifying payload")
 		}
 	}
-	r, err := http.NewRequest("POST", addr, data)
+	req, err := http.NewRequest("POST", addr, data)
 	if err != nil {
 		return errors.New("error creating POST request")
 	}
-	return c.req(r, auth, obj)
+	return c.req(req, auth, obj)
 }
 
-func (c *Client) req(r *http.Request, auth bool, obj interface{}) error {
-	r.Header.Set("User-Agent", userAgent)
+func (c *Client) req(req *http.Request, auth bool, obj interface{}) error {
+	req.Header.Set("User-Agent", UserAgent)
 	if auth {
-		r.Header.Set("Authorization", fmt.Sprintf("Token %s", c.AuthToken))
+		req.Header.Set("Authorization", fmt.Sprintf("Token %s", c.AuthToken))
 	}
-	if r.URL.String() == cardURL {
-		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if req.URL.String() == cardURL {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	} else {
-		r.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Content-Type", "application/json")
 		// The following circumvents canonical formatting
-		r.Header["FIXR-Platform"] = []string{"web"}
-		r.Header["FIXR-Platform-Version"] = []string{fixrPlatformVer}
-		r.Header["FIXR-App-Version"] = []string{fixrVersion}
+		req.Header["FIXR-Platform"] = []string{"web"}
+		req.Header["FIXR-Platform-Version"] = []string{FixrPlatformVer}
+		req.Header["FIXR-App-Version"] = []string{FixrVersion}
 	}
-	resp, err := c.httpClient.Do(r)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "error executing request")
 	}
@@ -174,35 +160,35 @@ func (c *Client) Logon() error {
 
 // Event returns the event information for a given event ID (integer).
 // An error will be returned if one is encountered.
-func (c *Client) Event(n int) (*Event, error) {
-	e := new(Event)
-	if err := c.get(fmt.Sprintf(eventURL, n), false, e); err != nil {
+func (c *Client) Event(id int) (*Event, error) {
+	event := new(Event)
+	if err := c.get(fmt.Sprintf(eventURL, id), false, event); err != nil {
 		return nil, errors.Wrap(err, "error getting event")
 	}
-	if e.Error != "" {
-		return nil, fmt.Errorf("error getting event: %s", e.Error)
+	if event.Error != "" {
+		return nil, fmt.Errorf("error getting event: %s", event.Error)
 	}
-	return e, nil
+	return event, nil
 }
 
 // Promo checks for the existence of a promotion code for a given ticket ID.
 // The returned *PromoCode can subsequently be passed to Book().
 // An error will be returned if one is encountered.
-func (c *Client) Promo(ticketID int, s string) (*PromoCode, error) {
-	p := new(PromoCode)
-	if err := c.get(fmt.Sprintf(promoURL, ticketID, s), true, p); err != nil {
+func (c *Client) Promo(ticketID int, code string) (*PromoCode, error) {
+	promo := new(PromoCode)
+	if err := c.get(fmt.Sprintf(promoURL, ticketID, code), true, promo); err != nil {
 		return nil, errors.Wrap(err, "error getting promo code")
 	}
-	if p.Error != "" {
-		return nil, fmt.Errorf("error getting promo code: %s", p.Error)
+	if promo.Error != "" {
+		return nil, fmt.Errorf("error getting promo code: %s", promo.Error)
 	}
-	return p, nil
+	return promo, nil
 }
 
 // Book books a ticket, given a *Ticket and an amout (with the option of a promo code).
 // The booking details and an error, if encountered, will be returned.
 func (c *Client) Book(ticket *Ticket, amount int, promo *PromoCode) (*Booking, error) {
-	b := new(Booking)
+	booking := new(Booking)
 	pl := payload{
 		"ticket_id": ticket.ID,
 		"amount":    amount,
@@ -227,11 +213,11 @@ func (c *Client) Book(ticket *Ticket, amount int, promo *PromoCode) (*Booking, e
 	if promo != nil {
 		pl["promo_code"] = promo.Code
 	}
-	if err := c.post(bookingURL, pl, true, b); err != nil {
+	if err := c.post(bookingURL, pl, true, booking); err != nil {
 		return nil, errors.Wrap(err, "error booking ticket")
 	}
-	if b.Error != "" {
-		return nil, fmt.Errorf("error booking ticket: %s", b.Error)
+	if booking.Error != "" {
+		return nil, fmt.Errorf("error booking ticket: %s", booking.Error)
 	}
-	return b, nil
+	return booking, nil
 }
