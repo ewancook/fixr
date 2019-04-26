@@ -14,12 +14,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
+var (
+	seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+)
 
 func uuid() string {
-	segment := math.Floor(65536 * (1 + rand.Float64()))
+	segment := math.Floor(65536 * (1 + seededRand.Float64()))
 	return strconv.FormatInt(int64(segment), 16)[1:]
 }
 
