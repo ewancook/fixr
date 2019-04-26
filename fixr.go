@@ -102,20 +102,28 @@ func (c *Client) get(addr string, auth bool, obj interface{}) error {
 	return c.req(req, auth, obj)
 }
 
-func (c *Client) post(addr string, val payload, auth bool, obj interface{}) error {
+func buildURLValues(values payload) (url.Values, error) {
+	pl := url.Values{}
+	for key, value := range values {
+		valueStr, ok := value.(string)
+		if !ok {
+			return nil, errors.New("failed to build payload")
+		}
+		pl.Set(key, valueStr)
+	}
+	return pl, nil
+}
+
+func (c *Client) post(addr string, kval payload, auth bool, obj interface{}) error {
 	data := new(bytes.Buffer)
 	if addr == cardURL {
-		pl := url.Values{}
-		for key, value := range val {
-			valueStr, ok := value.(string)
-			if !ok {
-				return errors.New("failed to build payload")
-			}
-			pl.Set(key, valueStr)
+		pl, err := buildURLValues(kval)
+		if err != nil {
+			return err
 		}
 		data.WriteString(pl.Encode())
 	} else {
-		if err := json.NewEncoder(data).Encode(val); err != nil {
+		if err := json.NewEncoder(data).Encode(kval); err != nil {
 			return errors.Wrap(err, "error jsonifying payload")
 		}
 	}
