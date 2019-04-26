@@ -35,27 +35,36 @@ type scrapeOutput struct {
 	Version string `json:"APP_VERSION"`
 }
 
+func unmarshalOutput(section string) (*scrapeOutput, error) {
+	output := new(scrapeOutput)
+	start, end := strings.Index(section, "{"), strings.Index(section, "}")
+	if err := json.Unmarshal([]byte(section[start:end+1]), output); err != nil {
+		return nil, errors.Wrap(err, "unmarshalling failure")
+	}
+	return output, nil
+}
+
 // UpdateVersion updates the FIXR API version used in the HTTP requests.
 func UpdateVersion() error {
 	req, err := http.Get(homeURL)
 	if err != nil {
-		return errors.Wrap(err, "error updating fixr version")
+		return errors.Wrap(err, "failed to update fixr.FixrVersion")
 	}
 	defer req.Body.Close()
 	scanner := bufio.NewScanner(req.Body)
 	for scanner.Scan() {
-		if strings.Contains(scanner.Text(), "APP_VERSION") {
-			section := scanner.Text()
-			start, end := strings.Index(section, "{"), strings.Index(section, "}")
-			out := new(scrapeOutput)
-			if err = json.Unmarshal([]byte(section[start:end+1]), out); err != nil {
-				return errors.Wrap(err, "error unmarshalling version")
-			}
+		section := scanner.Text()
+		if !strings.Contains(section, "APP_VERSION") {
+			continue
+		}
+		out, err := unmarshalOutput(section)
+		if len(out.Version) > 0 {
 			FixrVersion = out.Version
 		}
+		return err
 	}
 	if err := scanner.Err(); err != nil {
-		return errors.Wrap(err, "error scanning version html")
+		return errors.Wrap(err, fmt.Sprintf("failed to scan HTML for %s", homeURL))
 	}
-	return nil
+	return errors.New("search for APP_VERSION failed")
 }

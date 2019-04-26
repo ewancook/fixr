@@ -157,7 +157,7 @@ func (c *Client) Logon() error {
 	if err := c.post(loginURL, pl, false, c); err != nil {
 		return errors.Wrap(err, "error logging on")
 	}
-	if c.Error != "" {
+	if len(c.Error) > 0 {
 		return fmt.Errorf("error logging on: %s", c.Error)
 	}
 	return nil
@@ -170,7 +170,7 @@ func (c *Client) Event(id int) (*Event, error) {
 	if err := c.get(fmt.Sprintf(eventURL, id), false, event); err != nil {
 		return nil, errors.Wrap(err, "error getting event")
 	}
-	if event.Error != "" {
+	if len(event.Error) > 0 {
 		return nil, fmt.Errorf("error getting event: %s", event.Error)
 	}
 	return event, nil
@@ -184,7 +184,7 @@ func (c *Client) Promo(ticketID int, code string) (*PromoCode, error) {
 	if err := c.get(fmt.Sprintf(promoURL, ticketID, code), true, promo); err != nil {
 		return nil, errors.Wrap(err, "error getting promo code")
 	}
-	if promo.Error != "" {
+	if len(promo.Error) > 0 {
 		return nil, fmt.Errorf("error getting promo code: %s", promo.Error)
 	}
 	return promo, nil
@@ -221,7 +221,7 @@ func (c *Client) Book(ticket *Ticket, amount int, promo *PromoCode) (*Booking, e
 	if err := c.post(bookingURL, pl, true, booking); err != nil {
 		return nil, errors.Wrap(err, "error booking ticket")
 	}
-	if booking.Error != "" {
+	if len(booking.Error) > 0 {
 		return nil, fmt.Errorf("error booking ticket: %s", booking.Error)
 	}
 	return booking, nil
