@@ -146,7 +146,7 @@ func decodeJSONResponse(body io.ReadCloser, obj interface{}) error {
 		return nil
 	}
 	messageField := rstruct.FieldByName("Error")
-	if !messageField.IsValid() {
+	if !messageField.IsValid() || messageField.Kind() != reflect.String {
 		return nil
 	}
 	message := messageField.String()

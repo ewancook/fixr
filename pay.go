@@ -74,6 +74,7 @@ func (c *Client) AddCard(num, month, year, cvc, zip string) error {
 	if err := c.post(cardURL, pl, false, token); err != nil {
 		return errors.Wrap(err, "error retrieving tokens")
 	}
+	// Local handling of token.Error because decodeJSONResponse() can't handle non-string Error fields
 	if token.Error != (stripeError{}) {
 		return fmt.Errorf("error retrieving tokens: %s", token.Error.Message)
 	}
