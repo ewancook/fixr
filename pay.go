@@ -84,9 +84,6 @@ func (c *Client) AddCard(num, month, year, cvc, zip string) error {
 	if err := c.post(tokenURL, payload{"token": token.Token}, true, tokenReq); err != nil {
 		return errors.Wrap(err, "error sending tokens")
 	}
-	if len(tokenReq.Error) > 0 {
-		return fmt.Errorf("error sending tokens: %s", tokenReq.Error)
-	}
 	c.StripeUser = &tokenReq.User
 	return nil
 }

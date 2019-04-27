@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"reflect"
 
 	"github.com/pkg/errors"
 )
@@ -134,6 +136,27 @@ func (c *Client) post(addr string, kval payload, auth bool, obj interface{}) err
 	return c.req(req, auth, obj)
 }
 
+func decodeJSONResponse(body io.ReadCloser, obj interface{}) error {
+	if err := json.NewDecoder(body).Decode(obj); err != nil {
+		return errors.Wrap(err, "JSON decoding failed")
+	}
+	// Check for API error
+	rstruct := reflect.ValueOf(obj).Elem()
+	if rstruct.Kind() != reflect.Struct {
+		return nil
+	}
+	messageField := rstruct.FieldByName("Error")
+	if !messageField.IsValid() {
+		return nil
+	}
+	message := messageField.String()
+	if len(message) > 0 {
+		messageField.SetString("") // Remove "current" error
+		return errors.New(message)
+	}
+	return nil
+}
+
 func (c *Client) req(req *http.Request, auth bool, obj interface{}) error {
 	req.Header.Set("User-Agent", UserAgent)
 	if auth {
@@ -153,7 +176,7 @@ func (c *Client) req(req *http.Request, auth bool, obj interface{}) error {
 		return errors.Wrap(err, "error executing request")
 	}
 	defer resp.Body.Close()
-	return json.NewDecoder(resp.Body).Decode(obj)
+	return decodeJSONResponse(resp.Body, obj)
 }
 
 // Logon authenticates the client with FIXR and returns an error if encountered.
@@ -165,9 +188,6 @@ func (c *Client) Logon() error {
 	if err := c.post(loginURL, pl, false, c); err != nil {
 		return errors.Wrap(err, "error logging on")
 	}
-	if len(c.Error) > 0 {
-		return fmt.Errorf("error logging on: %s", c.Error)
-	}
 	return nil
 }
 
@@ -177,9 +197,6 @@ func (c *Client) Event(id int) (*Event, error) {
 	event := new(Event)
 	if err := c.get(fmt.Sprintf(eventURL, id), false, event); err != nil {
 		return nil, errors.Wrap(err, "error getting event")
-	}
-	if len(event.Error) > 0 {
-		return nil, fmt.Errorf("error getting event: %s", event.Error)
 	}
 	return event, nil
 }
@@ -192,9 +209,6 @@ func (c *Client) Promo(ticketID int, code string) (*PromoCode, error) {
 	if err := c.get(fmt.Sprintf(promoURL, ticketID, code), true, promo); err != nil {
 		return nil, errors.Wrap(err, "error getting promo code")
 	}
-	if len(promo.Error) > 0 {
-		return nil, fmt.Errorf("error getting promo code: %s", promo.Error)
-	}
 	return promo, nil
 }
 
@@ -206,13 +220,11 @@ func (c *Client) Book(ticket *Ticket, amount int, promo *PromoCode) (*Booking, e
 		"ticket_id": ticket.ID,
 		"amount":    amount,
 	}
+	/* ticket.Invalid can change upon ticket release (i.e. is time dependent),
+	it should therefore be checked with an API call. */
 	for t, msg := range map[bool]string{
 		ticket.SoldOut: "ticket selection has sold out",
-		ticket.Expired: "ticket selection has expired",
-		/* ticket.Invalid: "ticket selection is invalid",
-		Invalid can change upon ticket release (i.e. is time dependent),
-		it should therefore be checked with an API call. */
-	} {
+		ticket.Expired: "ticket selection has expired"} {
 		if t {
 			return nil, errors.New(msg)
 		}
@@ -228,9 +240,6 @@ func (c *Client) Book(ticket *Ticket, amount int, promo *PromoCode) (*Booking, e
 	}
 	if err := c.post(bookingURL, pl, true, booking); err != nil {
 		return nil, errors.Wrap(err, "error booking ticket")
-	}
-	if len(booking.Error) > 0 {
-		return nil, fmt.Errorf("error booking ticket: %s", booking.Error)
 	}
 	return booking, nil
 }
