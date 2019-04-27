@@ -55,9 +55,6 @@ func (c *Client) HasCard() (bool, error) {
 	if err := c.get(meURL, true, c); err != nil {
 		return existing, errors.Wrap(err, "error updating stripe details")
 	}
-	if len(c.Error) > 0 {
-		return existing, fmt.Errorf("error updating stripe details: %s", c.Error)
-	}
 	return len(c.StripeUser.Cards) != 0, nil
 }
 
