@@ -47,15 +47,15 @@ type tokenRequest struct {
 
 // HasCard checks for the existence of a saved card in the user's FIXR account.
 // The result and an error, if encountered, will be returned.
-func (c *Client) HasCard() (bool, error) {
+func (c *Client) HasCard() (existingCards bool, returnErr error) {
 	if c.StripeUser == nil {
-		return false, nil
+		return
 	}
-	existing := len(c.StripeUser.Cards) != 0
 	if err := c.get(meURL, true, c); err != nil {
-		return existing, errors.Wrap(err, "error updating stripe details")
+		returnErr = errors.Wrap(err, "error updating stripe details")
 	}
-	return len(c.StripeUser.Cards) != 0, nil
+	existingCards = len(c.StripeUser.Cards) != 0
+	return
 }
 
 // AddCard saves a card to the user's FIXR account, given the card details.
