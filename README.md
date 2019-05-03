@@ -1,5 +1,9 @@
-﻿# FIXR
-A wrapper around FIXR's ticket API
+﻿[![Build Status](https://travis-ci.org/ewancook/fixr.svg?branch=master)](https://travis-ci.org/ewancook/fixr) [![Go Report Card](https://goreportcard.com/badge/github.com/ewancook/fixr)](https://goreportcard.com/report/github.com/ewancook/fixr) [![codecov](https://codecov.io/gh/ewancook/fixr/branch/master/graph/badge.svg)](https://codecov.io/gh/ewancook/fixr)
+
+
+# FIXR 
+
+A wrapper around [FIXR](https://fixr.co)'s private ticket API
 
 ## Installation
 1. `go get github.com/pkg/errors`
