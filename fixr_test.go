@@ -7,8 +7,11 @@ import (
 	"testing"
 )
 
-func _decodeJSONResponseWrongErrorType(t *testing.T, testJSON []byte) {
-	body := ioutil.NopCloser(bytes.NewBuffer(testJSON))
+const decodeErrorMsg string = "1234" // for purposes of _decodeJSONResponseWrongErrorType()
+var decodeTestJSON = []byte(fmt.Sprintf(`{"Error": "%s"}`, decodeErrorMsg))
+
+func TestDecodeJSONResponseWrongErrorType(t *testing.T) {
+	body := ioutil.NopCloser(bytes.NewBuffer(decodeTestJSON))
 	obj := &struct {
 		Error float64 `json:",string"` // allow decoding
 	}{}
@@ -17,29 +20,39 @@ func _decodeJSONResponseWrongErrorType(t *testing.T, testJSON []byte) {
 	}
 }
 
-func _decodeJSONResponseShouldntDecode(t *testing.T, errorMessage string, testJSON []byte) {
-	body := ioutil.NopCloser(bytes.NewBuffer(testJSON))
+func TestDecodeJSONResponseShouldntDecode(t *testing.T) {
+	body := ioutil.NopCloser(bytes.NewBuffer(decodeTestJSON))
 	obj := &struct{ Error float64 }{} // don't allow decoding
-	if err := decodeJSONResponse(body, obj); err == nil || err.Error() == errorMessage {
+	if err := decodeJSONResponse(body, obj); err == nil || err.Error() == decodeErrorMsg {
 		t.Error("JSON decoding should fail\n")
 	}
 }
 
-func _decodeJSONResponseNormal(t *testing.T, errorMessage string, testJSON []byte) {
-	body := ioutil.NopCloser(bytes.NewBuffer(testJSON))
+func TestDecodeJSONResponseFinalReturnNil(t *testing.T) {
+	emptyJSON := []byte(`{"Error": ""}`)
+	body := ioutil.NopCloser(bytes.NewBuffer(emptyJSON))
+	obj := &struct{ Error string }{}
+	if err := decodeJSONResponse(body, obj); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestDecodeJSONResponseNotAStruct(t *testing.T) {
+	boolJSON := []byte(`true`)
+	body := ioutil.NopCloser(bytes.NewBuffer(boolJSON))
+	obj := false
+	if err := decodeJSONResponse(body, &obj); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestDecodeJSONResponseNormal(t *testing.T) {
+	body := ioutil.NopCloser(bytes.NewBuffer(decodeTestJSON))
 	obj := &struct{ Error string }{"is this cleared?"}
-	if err := decodeJSONResponse(body, obj).Error(); err != errorMessage {
-		t.Errorf("expected '%s'; got '%s'\n", errorMessage, err)
+	if err := decodeJSONResponse(body, obj).Error(); err != decodeErrorMsg {
+		t.Errorf("expected '%s'; got '%s'\n", decodeErrorMsg, err)
 	}
 	if len(obj.Error) != 0 {
 		t.Errorf("struct error field should be cleared. got: %+v", obj)
 	}
-}
-
-func TestDecodeJSONResponse(t *testing.T) {
-	errorMessage := "1234" // for purposes of _decodeJSONResponseWrongErrorType()
-	testJSON := []byte(fmt.Sprintf(`{"Error": "%s"}`, errorMessage))
-	_decodeJSONResponseNormal(t, errorMessage, testJSON)
-	_decodeJSONResponseShouldntDecode(t, errorMessage, testJSON)
-	_decodeJSONResponseWrongErrorType(t, testJSON)
 }
