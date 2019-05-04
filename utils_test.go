@@ -10,19 +10,17 @@ func init() {
 	seededRand = rand.New(rand.NewSource(0))
 }
 
-var errorMessage string = "%s failed: expected %s; got %s\n"
-
 func TestUUID(t *testing.T) {
 	result, expected := uuid(), "f1f8"
 	if result != expected {
-		t.Errorf(errorMessage, "TestUUID", expected, result)
+		t.Errorf("expected %s; got %s\n", expected, result)
 	}
 }
 
 func TestGenKey(t *testing.T) {
 	result, expected := genKey(), "3eb6a7ec-0de9-5e1a-4a1b-3143a7c3e5ac"
 	if result != expected {
-		t.Errorf(errorMessage, "TestGenKey", expected, result)
+		t.Errorf("expected %s; got %s\n", expected, result)
 	}
 }
 
@@ -34,6 +32,6 @@ func TestUnmarshalOutput(t *testing.T) {
 		t.Errorf("TestUnmarshalOutput failed: %v", err)
 	}
 	if result.Version != expected {
-		t.Errorf(errorMessage, "TestUnmarshalOutput", expected, result.Version)
+		t.Errorf("expected %s; got %s\n", expected, result.Version)
 	}
 }
