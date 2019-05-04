@@ -24,14 +24,26 @@ func TestGenKey(t *testing.T) {
 	}
 }
 
-func TestUnmarshalOutput(t *testing.T) {
+func TestUnmarshalOutputNormal(t *testing.T) {
 	expected := "1.0"
 	testJSON := fmt.Sprintf(`{"APP_VERSION": "%s"}`, expected)
-	result, err := unmarshalOutput(testJSON)
-	if err != nil {
-		t.Errorf("TestUnmarshalOutput failed: %v", err)
-	}
+	result, _ := unmarshalOutput(testJSON)
 	if result.Version != expected {
 		t.Errorf("expected %s; got %s\n", expected, result.Version)
 	}
+}
+
+func TestUnmarshalOutputUnmarshalFailure(t *testing.T) {
+	if _, err := unmarshalOutput(`{test}`); err == nil {
+		t.Error("JSON unmarshalling should fail")
+	}
+}
+
+func TestUnmarshalOutputNotJSONArray(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("expected: runtime error: slice bounds out of range")
+		}
+	}()
+	unmarshalOutput(``)
 }
