@@ -34,7 +34,7 @@ var (
 
 type payload map[string]interface{}
 
-type objInterface interface {
+type responseParams interface {
 	error() error
 	clearError()
 }
@@ -124,7 +124,7 @@ func NewClient(email string) *Client {
 	return &Client{Email: email, httpClient: new(http.Client)}
 }
 
-func (c *Client) get(addr string, auth bool, obj objInterface) error {
+func (c *Client) get(addr string, auth bool, obj responseParams) error {
 	req, err := http.NewRequest("GET", addr, nil)
 	if err != nil {
 		return errors.New("error creating GET request")
@@ -132,7 +132,7 @@ func (c *Client) get(addr string, auth bool, obj objInterface) error {
 	return c.req(req, auth, obj)
 }
 
-func (c *Client) post(addr string, data *bytes.Buffer, auth bool, obj objInterface) error {
+func (c *Client) post(addr string, data *bytes.Buffer, auth bool, obj responseParams) error {
 	req, err := http.NewRequest("POST", addr, data)
 	if err != nil {
 		return errors.New("error creating POST request")
@@ -140,7 +140,7 @@ func (c *Client) post(addr string, data *bytes.Buffer, auth bool, obj objInterfa
 	return c.req(req, auth, obj)
 }
 
-func decodeJSONResponse(body io.ReadCloser, obj objInterface) error {
+func decodeJSONResponse(body io.ReadCloser, obj responseParams) error {
 	if err := json.NewDecoder(body).Decode(obj); err != nil {
 		return errors.Wrap(err, "JSON decoding failed")
 	}
@@ -151,7 +151,7 @@ func decodeJSONResponse(body io.ReadCloser, obj objInterface) error {
 	return nil
 }
 
-func (c *Client) req(req *http.Request, auth bool, obj objInterface) error {
+func (c *Client) req(req *http.Request, auth bool, obj responseParams) error {
 	req.Header.Set("User-Agent", UserAgent)
 	if auth {
 		req.Header.Set("Authorization", fmt.Sprintf("Token %s", c.AuthToken))
