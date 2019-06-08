@@ -1,7 +1,7 @@
 ﻿[![Build Status](https://travis-ci.org/ewancook/fixr.svg?branch=master)](https://travis-ci.org/ewancook/fixr) [![Go Report Card](https://goreportcard.com/badge/github.com/ewancook/fixr)](https://goreportcard.com/report/github.com/ewancook/fixr) [![codecov](https://codecov.io/gh/ewancook/fixr/branch/master/graph/badge.svg)](https://codecov.io/gh/ewancook/fixr)
 
 
-# FIXR 
+# FIXR
 
 A wrapper around [FIXR](https://fixr.co)'s private ticket API
 
@@ -29,8 +29,8 @@ func main() {
 		fmt.Printf("FIXR version updated (%s)\n", fixr.FixrVersion)
 	}
 	// Create client and logon
-	c := fixr.NewClient("username", "password")
-	if err := c.Logon(); err != nil {
+	c := fixr.NewClient("username")
+	if err := c.Logon("password"); err != nil {
 		fmt.Printf("logon failed (%v)\n", err)
 	}
 	// Fetch event information
@@ -41,7 +41,7 @@ func main() {
 	}
 	// Determine ticket information
 	for _, t := range e.Tickets {
-		fmt.Printf("[%d] %s (£%.2f; Max: %d)\n", t.ID, t.Name, t.Price + t.BookingFee, t.Max)
+		fmt.Printf("[%d] %s (£%.2f; Max: %d)\n", t.ID, t.Name, t.Price+t.BookingFee, t.Max)
 	}
 	// Book a ticket
 	b, err := c.Book(&e.Tickets[0], 1, nil)
@@ -51,4 +51,5 @@ func main() {
 	}
 	fmt.Printf("booked: %s (PDF: %s)\n", b.Event, b.PDF)
 }
+
 ```

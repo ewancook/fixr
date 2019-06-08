@@ -2,11 +2,13 @@ package fixr
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +31,26 @@ func genKey() string {
 		segments[i] = uuid()
 	}
 	return fmt.Sprintf("%s%s-%s-%s-%s-%s%s%s", segments...)
+}
+
+func buildURLValues(values payload) (url.Values, error) {
+	pl := url.Values{}
+	for key, value := range values {
+		valueStr, ok := value.(string)
+		if !ok {
+			return nil, errors.New("failed to build payload")
+		}
+		pl.Set(key, valueStr)
+	}
+	return pl, nil
+}
+
+func jsonifyPayload(kval payload) (*bytes.Buffer, error) {
+	data := new(bytes.Buffer)
+	if err := json.NewEncoder(data).Encode(kval); err != nil {
+		return nil, errors.Wrap(err, "error jsonifying payload")
+	}
+	return data, nil
 }
 
 type scrapeOutput struct {
